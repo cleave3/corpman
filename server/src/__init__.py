@@ -1,5 +1,7 @@
+from sqlmodel import text
+from server.src.config import engine
 import os
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, status
 from fastapi.staticfiles import StaticFiles
 from src.middleware.dependencies import PermissionChecker
 from src.common.utilities import response
@@ -30,6 +32,20 @@ register_middleware(app)
 def app_entry():
     return response(message="Corpman API is live 🚀")
 
+@app.get("/liveness", status_code=status.HTTP_200_OK)
+async def liveness():
+    return response(message="Corpman API is alive 🚀")
+
+@app.get(f"{version_prefix}/health/readiness", status_code=status.HTTP_200_OK)
+async def readiness():
+    # Verify DB connectivity to prevent routing traffic before database is ready
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return response(message="Corpman API is ready 🚀")
+    except Exception as e:
+        return response(message=f"Corpman API is not ready {str(e)} ❌", code=503)
+
 
 @app.get("/error-log", status_code=200, include_in_schema=False)
 def download_error_log():
@@ -38,7 +54,7 @@ def download_error_log():
         return FileResponse(
             path=log_file_path, media_type="text/plain", filename="error.log"
         )
-    return response(message="No error.log file found", status_code=404)
+    return response(message="No error.log file found", code=404)
 
 
 app.include_router(

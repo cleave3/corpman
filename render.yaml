@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: corpman-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    healthCheckPath: /api/v1/health/readiness
+    preDeployCommand: alembic upgrade head
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: corpman-db
+          property: connectionString
+      - key: APP_MODE
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: REDIS_URL
+        sync: false
+      - key: BASE_URL
+        value: https://corpman-api.onrender.com
+      - key: FRONTEND_URL
+        value: https://corpman.vercel.app
+      - key: MAILTRAP_TOKEN
+        sync: false
+      - key: MAIL_SENDER_NAME
+        value: Corpman
+      - key: MAIL_SENDER_EMAIL
+        value: support@corpman.app
+
+databases:
+  - name: corpman-db
+    plan: free
+    databaseName: corpman
+    user: corpman_user
