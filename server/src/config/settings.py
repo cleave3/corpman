@@ -18,8 +18,3 @@ class Settings(BaseSettings):
 
 
 Config = Settings()
-
-
-broker_url = Config.BASE_URL
-result_backend = Config.BASE_URL
-broker_connection_retry_on_startup = True

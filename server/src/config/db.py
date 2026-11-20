@@ -5,22 +5,25 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.config import Config
 
+# Ensure Render's standard postgresql:// URL uses the asyncpg driver
+db_url = str(Config.DATABASE_URL)
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 engine = AsyncEngine(
     create_engine(
-        url=Config.DATABASE_URL,
-        echo=True,
+        url=db_url,
+        echo=False,
     )
 )
 
-
 async def init_db():
     async with engine.begin() as conn:
-
         await conn.run_sync(SQLModel.metadata.create_all)
-
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     Session = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
-
     async with Session() as session:
         yield session

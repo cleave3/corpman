@@ -1,5 +1,5 @@
 from sqlmodel import text
-from server.src.config import engine
+from src.config.db import engine
 import os
 from fastapi import Depends, FastAPI, status
 from fastapi.staticfiles import StaticFiles
