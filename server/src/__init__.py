@@ -1,5 +1,7 @@
+from contextlib import asynccontextmanager
+
 from sqlmodel import text
-from src.config.db import engine
+from src.config.db import engine, init_db
 import os
 from fastapi import Depends, FastAPI, status
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +22,12 @@ from fastapi.responses import FileResponse
 version_prefix = f"/api/{app_options['version']}"
 
 app = FastAPI(**app_options)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Run migrations using advisory lock on startup
+    await init_db()
+    yield
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
