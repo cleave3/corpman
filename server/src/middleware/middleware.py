@@ -33,16 +33,6 @@ def register_middleware(app: FastAPI):
         allow_credentials=True,
     )
 
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=[
-            "localhost",
-            "127.0.0.1",
-            "server-health.azurewebsites.net",
-            "0.0.0.0",
-        ],
-    )
-
     @app.middleware("http")
     async def error_logging_middleware(request: Request, call_next):
         try:

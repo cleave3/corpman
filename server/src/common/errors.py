@@ -325,7 +325,7 @@ def register_all_errors(app: FastAPI):
     app.add_exception_handler(
         RequestValidationError,
         create_exception_handler(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             message="validation errors",
         ),
     )
