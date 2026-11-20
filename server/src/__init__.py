@@ -22,7 +22,6 @@ version_prefix = f"/api/{app_options['version']}"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Run migrations using advisory lock on startup
     try:
         await run_safe_migrations()
     except Exception as e:

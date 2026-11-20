@@ -30,11 +30,18 @@ MIGRATION_LOCK_ID = 84920481  # Unique 64-bit integer advisory lock key for Corp
 
 def _execute_alembic_upgrade():
     alembic_cfg = AlembicConfig("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", db_url)
     command.upgrade(alembic_cfg, "head")
 
 
+async def init_db():
+    import src.models  # Ensures all model tables are registered in SQLModel.metadata
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+
 async def run_safe_migrations():
-    """Executes Alembic migrations safely under a PostgreSQL advisory lock without blocking the event loop."""
+    """Executes Alembic migrations safely under a PostgreSQL advisory lock with an automatic SQLModel create_all fallback."""
     async with engine.connect() as conn:
         result = await conn.execute(text(f"SELECT pg_try_advisory_lock({MIGRATION_LOCK_ID})"))
         has_lock = result.scalar()
@@ -45,18 +52,15 @@ async def run_safe_migrations():
                 await asyncio.to_thread(_execute_alembic_upgrade)
                 print("✅ Database migrations completed successfully.")
             except Exception as e:
-                print(f"❌ Migration failed: {e}")
-                raise e
+                print(f"❌ Alembic migration failed: {e}")
+                print("⚠️ Falling back to SQLModel create_all to guarantee tables exist...")
+                await init_db()
+                print("✅ SQLModel create_all completed successfully.")
             finally:
                 await conn.execute(text(f"SELECT pg_advisory_unlock({MIGRATION_LOCK_ID})"))
                 print("🔓 Released migration lock.")
         else:
             print("⏳ Another instance holds the migration lock. Skipping duplicate execution.")
-
-
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
