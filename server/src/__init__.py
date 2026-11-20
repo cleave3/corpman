@@ -1,9 +1,10 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlmodel import text
-from src.config.db import engine
+from src.config.db import engine, run_safe_migrations
 from src.middleware.dependencies import PermissionChecker
 from src.common.utilities import response
 from src.common.permissions import user_permission_actions
@@ -19,7 +20,15 @@ from .common.errors import register_all_errors
 
 version_prefix = f"/api/{app_options['version']}"
 
-app = FastAPI(**app_options)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await run_safe_migrations()
+    except Exception as e:
+        print(f"Lifespan migration warning: {e}")
+    yield
+
+app = FastAPI(lifespan=lifespan, **app_options)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
