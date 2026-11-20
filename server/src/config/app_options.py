@@ -7,7 +7,7 @@ app_options = {
     "version": version,
     "title": "Corpman API",
     "description": "Corpman API Service",
-    "docs_url": None if is_production else "/docs",
+    "docs_url": "/docs",
     "openapi_url": None if is_production else "/openapi.json",
     "redoc_url": None if is_production else "/redoc",
     "swagger_ui_parameters": {
