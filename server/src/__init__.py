@@ -26,12 +26,13 @@ version_prefix = f"/api/{app_options['version']}"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
+        LOCK_ID = 11223344
         async with engine.connect() as conn:
-            if(await conn.execute(text("SELECT pg_try_lock(112233)"))).scalar():
+            if(await conn.execute(text("SELECT pg_try_advisory_lock(1)"))).scalar():
                 try:
                     await asyncio.to_thread(command.upgrade, AlembicConfig("alembic.ini"), "head")
                 finally:
-                    await conn.execute(text("SELECT pg_try_unlock(112233)"))
+                    await conn.execute(text("SELECT pg_try_advisory_unlock(1)"))
     except Exception as e:
         print(f"Lifespan warning: {e}")
     yield
