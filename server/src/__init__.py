@@ -23,6 +23,7 @@ from alembic.config import Config as AlembicConfig
 
 version_prefix = f"/api/{app_options['version']}"
 
+@asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         async with engine.connect() as conn:
