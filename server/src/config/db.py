@@ -43,6 +43,8 @@ async def run_safe_migration():
                 print("DB migration completed successfully..")
             except Exception as e:
                 print(f"Failed to run alembic upgrade: {e}")
+            finally:
+                await conn.execute(text(f"SELECT pg_try_advisory_unlock({MIGRATION_LOCK_ID})"))
                 
         else:
             print("failed to acquire migration lock")
