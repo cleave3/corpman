@@ -16,10 +16,27 @@ from src.modules.analytics.routes import analytics_router
 from src.middleware.middleware import register_middleware
 from src.config.app_options import app_options
 from .common.errors import register_all_errors
+from contextlib import asynccontextmanager
+from alembic import command
+from alembic.config import Config as AlembicConfig
+import asyncio
 
 version_prefix = f"/api/{app_options['version']}"
 
-app = FastAPI(**app_options)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        async with engine.connect() as conn:
+            if(await conn.execute(text("SELECT pg_try_lock(112233)"))).scalar():
+                try:
+                    await asyncio.to_thread(command.upgrade, AlembicConfig("alembic.ini"), "head")
+                finally:
+                    await conn.execute(text("SELECT pg_try_unlock(112233)"))
+    except Exception as e:
+        print(f"Lifespan warning: {e}")
+    yield
+
+app = FastAPI(lifespan=lifespan, **app_options)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
