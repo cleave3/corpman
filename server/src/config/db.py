@@ -15,9 +15,7 @@ elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+as
 engine = AsyncEngine(
     create_engine(
         url=db_url,
-        echo=False,
-        pool_size=5,
-        max_overflow=2
+        echo=False
     )
 )
 
