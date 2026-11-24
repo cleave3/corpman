@@ -30,7 +30,7 @@ def _execute_alembic_upgrade():
     
 async def run_safe_migration():
     async with engine.connect() as conn:
-        result = await conn.execute(text("SELECT try_advisory_lock(1)")) 
+        result = await conn.execute(text("SELECT pg_try_advisory_lock(1)")) 
         has_lock = result.scalar()
         
         if has_lock:
@@ -41,7 +41,7 @@ async def run_safe_migration():
             except Exception as e:
                 print(f"Migration faile: {e}")
             finally:
-                await conn.execute(text("SELECT try_advisory_unlock(1)"))      
+                await conn.execute(text("SELECT pg_try_advisory_unlock(1)"))      
         else:
             print("Another instance has lock")          
 
