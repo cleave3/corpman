@@ -29,9 +29,11 @@ def _execute_almebic_upgrade():
     config = AlembicConfig("alembic.ini")
     command.upgrade(config, "head")
 
+LOCK_ID = 12345678
+
 async def run_safe_migration():
     async with engine.connect() as conn:
-        result = await conn.execute(text("SELECT pg_try_avisory_lock(1)"))
+        result = await conn.execute(text(f"SELECT pg_try_avisory_lock({LOCK_ID})"))
         has_lock = result.scalar()
         
         if has_lock:
@@ -42,7 +44,7 @@ async def run_safe_migration():
             except Exception as e:
                 print(f"Alembic migration failed: {e}")
             finally:
-                await conn.execute(text("SELECT pg_try_avisory_unlock(1)"))
+                await conn.execute(text(f"SELECT pg_try_avisory_unlock({LOCK_ID})"))
         else:
             print("Another instance holds the migration lock")
                 
