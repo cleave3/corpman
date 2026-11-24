@@ -3,7 +3,7 @@ from fastapi import Depends, FastAPI, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlmodel import text
-from src.config.db import engine, run_alembic_migration
+from src.config.db import engine
 from src.middleware.dependencies import PermissionChecker
 from src.common.utilities import response
 from src.common.permissions import user_permission_actions
