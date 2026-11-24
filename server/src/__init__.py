@@ -16,22 +16,10 @@ from src.modules.analytics.routes import analytics_router
 from src.middleware.middleware import register_middleware
 from src.config.app_options import app_options
 from .common.errors import register_all_errors
-from contextlib import asynccontextmanager
-import asyncio
 
 version_prefix = f"/api/{app_options['version']}"
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    try:
-        print("starting alembic migration...")
-        await asyncio.to_thread(run_alembic_migration)
-        print("DB migration completed successfully...")
-    except Exception as e:
-        print(f"Warning for lifespan migration: {e}")
-    yield
-
-app = FastAPI(lifespan=lifespan, **app_options)
+app = FastAPI(**app_options)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
